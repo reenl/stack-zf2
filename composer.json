@@ -1,0 +1,21 @@
+{
+    "name": "stack/zf2",
+    "description": "Run Zend Framework on a Symfony HTTP kernel",
+    "keywords": ["stack", "zf2"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Reen Lokum",
+            "email": "igor@wielder.ch"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "zendframework/zendframework": "~2.2",
+        "symfony/http-foundation": "~2.1",
+        "symfony/http-kernel": "~2.1"
+    },
+    "autoload": {
+        "psr-0": { "Stack": "src/" }
+    }
+}
