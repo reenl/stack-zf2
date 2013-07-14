@@ -96,9 +96,9 @@ class ZendHttpKernel implements HttpKernelInterface
      */
     public function handle(SymfonyRequest $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
     {
-        $this->setRequest($request);
+        $this->setSymfonyRequest($request);
         $this->application->bootstrap($this->listeners)->run();
-        return $this->getResponse();
+        return $this->getSymfonyResponse();
     }
 
     /**
@@ -107,7 +107,7 @@ class ZendHttpKernel implements HttpKernelInterface
      * @param \Symfony\Component\HttpFoundation\Request $request
      * @return null
      */
-    protected function setRequest(SymfonyRequest $request)
+    protected function setSymfonyRequest(SymfonyRequest $request)
     {
         $zendRequest = self::createZendRequest($request);
 
@@ -122,7 +122,7 @@ class ZendHttpKernel implements HttpKernelInterface
      *
      * @return \Symfony\Component\HttpFoundation\Response $response
      */
-    protected function getResponse()
+    protected function getSymfonyResponse()
     {
         $response = $this->response;
         $this->response = null;
