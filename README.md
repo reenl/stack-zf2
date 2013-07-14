@@ -9,10 +9,8 @@ If you install zend framework using composer simply add the require:
 
 After that you probably want to change `public/index.php` to use the HttpKernel,
 in order to do that you can copy `public_example/index.php` from this
-repository.
-
-However it would make more sense for you to create your own stack :) See:
-http://stackphp.com/
+repository. However it would make more sense for you to [create your own
+stack :)] (http://stackphp.com/)
 
 If you don't use composer, start using it.
 
