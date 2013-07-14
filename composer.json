@@ -1,5 +1,5 @@
 {
-    "name": "stack/zf2",
+    "name": "reenl/stack-zf2",
     "description": "Run Zend Framework on a Symfony HTTP kernel",
     "keywords": ["stack", "zf2"],
     "license": "MIT",
