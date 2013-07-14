@@ -33,18 +33,16 @@ class ZendHttpKernel implements HttpKernelInterface
     protected $response;
 
     /**
-     * Fully compatable with \Zend\Mvc\Application::init.
+     * Fully compatable with \Zend\Mvc\Application::init. However this function
+     * does not call bootstrap.
      *
      * @param array $configuration
      * @return \Stack\ZendHttpKernel
      */
-    public function init($configuration = array())
+    public static function init($configuration = array())
     {
         $smConfig = isset($configuration['service_manager']) ? $configuration['service_manager'] : array();
 
-        if (isset($configuration['listeners'])) {
-            $this->setListeners($configuration['listeners']);
-        }
         $serviceManager = new ServiceManager();
         $cfg = new Service\ServiceManagerConfig($smConfig);
         $cfg->configureServiceManager($serviceManager);
@@ -52,8 +50,11 @@ class ZendHttpKernel implements HttpKernelInterface
         $serviceManager->get('ModuleManager')->loadModules();
         $application = $serviceManager->get('Application');
 
-        $this->setApplication($application);
-        return $this;
+        $instance = new static($application);
+        if (isset($configuration['listeners'])) {
+            $instance->setListeners($configuration['listeners']);
+        }
+        return $instance;
     }
 
     /**
@@ -66,7 +67,7 @@ class ZendHttpKernel implements HttpKernelInterface
      * @param \Zend\Mvc\Application $application
      * @return \Stack\ZendHttpKernel
      */
-    public function setApplication(Application $application)
+    public function __construct(Application $application)
     {
         // Replace SendResponseListener
         $events = $application->getEventManager();
@@ -95,9 +96,6 @@ class ZendHttpKernel implements HttpKernelInterface
      */
     public function handle(SymfonyRequest $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
     {
-        if ($this->application === null) {
-            throw new \RuntimeException('No instance of Zend\Mvc\Application given.');
-        }
         $this->setRequest($request);
         $this->application->bootstrap($this->listeners)->run();
         return $this->getResponse();
