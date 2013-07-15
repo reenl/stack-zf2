@@ -27,12 +27,6 @@ class ZendHttpKernel implements HttpKernelInterface
     protected $listeners = array();
 
     /**
-     *
-     * @var \Symfony\Component\HttpFoundation\Response
-     */
-    protected $response;
-
-    /**
      * Fully compatable with \Zend\Mvc\Application::init. However this function
      * does not call bootstrap.
      *
@@ -69,11 +63,6 @@ class ZendHttpKernel implements HttpKernelInterface
      */
     public function __construct(Application $application)
     {
-        // Replace SendResponseListener
-        $events = $application->getEventManager();
-        $events->clearListeners(MvcEvent::EVENT_FINISH);
-        $events->attach(MvcEvent::EVENT_FINISH, array($this, 'onFinish'), -10000);
-
         // Add the application.
         $this->application = $application;
         return $this;
@@ -97,8 +86,43 @@ class ZendHttpKernel implements HttpKernelInterface
     public function handle(SymfonyRequest $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
     {
         $this->setSymfonyRequest($request);
-        $this->application->bootstrap($this->listeners)->run();
+        /*
+         * ZF 2.2 exposes the request object when bootstrapping. With that fixed
+         * we can move this back to init.
+         */
+        $this->bootstrap();
+
+        // Run the application.
+        $this->run();
+
         return $this->getSymfonyResponse();
+    }
+
+    /**
+     *
+     * @return \Stack\ZendHttpKernel
+     */
+    public function bootstrap()
+    {
+        $this->application->bootstrap($this->listeners);
+
+        // Replace SendResponseListener
+        $events = $this->application->getEventManager();
+        $events->clearListeners(MvcEvent::EVENT_FINISH);
+        return $this;
+    }
+
+    /**
+     * Run the application.
+     *
+     * Our run function returns null until ZF decides what to return at
+     * \Zend\Mvc\Application::run
+     *
+     * @return null
+     */
+    public function run()
+    {
+        $this->application->run();
     }
 
     /**
@@ -118,32 +142,14 @@ class ZendHttpKernel implements HttpKernelInterface
     }
 
     /**
-     * Removes the response from this instance and returns it.
+     * Gets the response from the service manager and convert it to Symfony.
      *
-     * @return \Symfony\Component\HttpFoundation\Response $response
+     * @return \Symfony\Component\HttpFoundation\Response
      */
     protected function getSymfonyResponse()
     {
-        $response = $this->response;
-        $this->response = null;
-        return $response;
-    }
-
-    /**
-     * Listens to the finish event, reads the response.
-     *
-     * @param \Zend\Mvc\MvcEvent $event
-     * @return null
-     */
-    public function onFinish(MvcEvent $event)
-    {
-        $response = $event->getResponse();
-        if (!$response instanceof ZendResponse) {
-            return;
-        }
-        $event->stopPropagation(true);
-
-        $this->response = self::createSymfonyResponse($response);
+        $zendResponse = $this->application->getResponse();
+        return self::createSymfonyResponse($zendResponse);
     }
 
     /**
