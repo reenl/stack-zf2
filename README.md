@@ -37,7 +37,7 @@ A number of things including:
 - Find out how to handle chdir, probably a setter on our kernel.
 - Test cases.
 - Test compatibility other stack components.
-- Try to make ZF throw exceptions instead of an error page when $catch is true.
+- ~~Try to make ZF throw exceptions instead of an error page when $catch is false.~~
 
 ## Support
 
