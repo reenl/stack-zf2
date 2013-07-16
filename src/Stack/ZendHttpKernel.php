@@ -92,6 +92,9 @@ class ZendHttpKernel implements HttpKernelInterface
          */
         $this->bootstrap();
 
+        // Register if exceptions should be caught into the ServiceManager.
+        $this->setCatchExceptions($catch);
+
         // Run the application.
         $this->run();
 
@@ -109,7 +112,43 @@ class ZendHttpKernel implements HttpKernelInterface
         // Replace SendResponseListener
         $events = $this->application->getEventManager();
         $events->clearListeners(MvcEvent::EVENT_FINISH);
+
+        $events->attach(MvcEvent::EVENT_DISPATCH_ERROR, array($this, 'throwException'));
+        $events->attach(MvcEvent::EVENT_RENDER_ERROR, array($this, 'throwException'));
+
         return $this;
+    }
+
+    public function throwException(MvcEvent $event)
+    {
+        $sm = $this->application->getServiceManager();
+        if ($sm->get('KernelCatchExceptions')) {
+            return;
+        }
+
+        $event->stopPropagation(true);
+
+        $ex = $event->getParam('exception');
+        if ($ex !== null) {
+            throw $ex;
+        }
+
+        $error = $event->getError();
+        $message = 'Unkown error.';
+        if ($error) {
+            $message .= ' ('.$error.')';
+        }
+        $class = '\Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException';
+
+        switch ($error) {
+            case Application::ERROR_CONTROLLER_NOT_FOUND:
+            case Application::ERROR_CONTROLLER_INVALID:
+            case Application::ERROR_ROUTER_NO_MATCH:
+                $message = '404 not found: '.$error;
+                $class = '\Symfony\Component\HttpKernel\Exception\NotFoundHttpException';
+                break;
+        }
+        throw new $class($message);
     }
 
     /**
@@ -138,6 +177,21 @@ class ZendHttpKernel implements HttpKernelInterface
         $serviceManager = $this->application->getServiceManager();
         $serviceManager->setAllowOverride(true);
         $serviceManager->setService('Request', $zendRequest);
+        $serviceManager->setAllowOverride(false);
+    }
+
+    /**
+     * Adds a value to the ServiceManager to indicate if an exception must be
+     * thrown or caught.
+     *
+     * @param boolean $catch
+     * @return null
+     */
+    protected function setCatchExceptions($catch)
+    {
+        $serviceManager = $this->application->getServiceManager();
+        $serviceManager->setAllowOverride(true);
+        $serviceManager->setService('KernelCatchExceptions', $catch);
         $serviceManager->setAllowOverride(false);
     }
 
