@@ -35,7 +35,7 @@ A number of things including:
 - Find out what to do with Request::getBasePath. Hardcoded usage in some helper.
   (this is why we need a Zend\Http\PhpEnvironment\Request for now)
 - Find out how to handle chdir, probably a setter on our kernel.
-- Test cases
+- Test cases.
 - Test compatibility other stack components.
 - Try to make ZF throw exceptions instead of an error page when $catch is true.
 
