@@ -1,6 +1,8 @@
 # Stack/ZF2
 
-Using Symfony Http Foundation to make use of Stack.
+This project runs a [ZF2] (https://github.com/zendframework/zf2) project within
+the [Symfony Http Foundation] (https://github.com/symfony/HttpFoundation) wich is
+even more fun when [Stack] (http://stackphp.com/) comes into the picture.
 
 ## Installation
 
@@ -22,8 +24,7 @@ It helped me understand the inner workings of Zend Framework.
 ## Practical use?
 
 A number of things including:
-- Gracefully migrate from Zend Framework to Symfony or the other way around,
-  using stack/url-map.
+- Gracefully migrate from Zend Framework to Symfony or the other way around.
 - Ability to use (hopefully all) the stack middlewares.
 - Easy to write test cases, just forge a Symfony Request and get a
   Symfony Response back.
@@ -34,6 +35,7 @@ A number of things including:
 - Find out what to do with Request::getBasePath. Hardcoded usage in some helper.
   (this is why we need a Zend\Http\PhpEnvironment\Request for now)
 - Find out how to handle chdir, probably a setter on our kernel.
+  (Please twitter me if you know the dependencies for chdir.)
 - Test cases.
 - Test compatibility other stack components.
 - ~~Conversion from Symfony to Zend Request is via toString.~~
@@ -44,3 +46,10 @@ A number of things including:
 
 - Open a ticket
 - twitter: https://twitter.com/reenlokum
+
+## Contribute
+
+- Optional: create an issue to notify me what you are doing
+- Fork
+- Improve
+- PR
