@@ -27,7 +27,7 @@ A number of things including:
 - Ability to use (hopefully all) the stack middlewares.
 - Easy to write test cases, just forge a Symfony Request and get a
   Symfony Response back.
-- Find architecture flaws in ZF2.
+- Find bugs in ZF2.
 
 ## Todo
 
