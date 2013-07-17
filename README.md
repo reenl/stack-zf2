@@ -31,12 +31,13 @@ A number of things including:
 
 ## Todo
 
-- Conversion from Symfony to Zend Request is via toString.
 - Find out what to do with Request::getBasePath. Hardcoded usage in some helper.
   (this is why we need a Zend\Http\PhpEnvironment\Request for now)
 - Find out how to handle chdir, probably a setter on our kernel.
 - Test cases.
 - Test compatibility other stack components.
+- ~~Conversion from Symfony to Zend Request is via toString.~~
+  $_ENV and $_FILES are not yet supported.
 - ~~Try to make ZF throw exceptions instead of an error page when $catch is false.~~
 
 ## Support

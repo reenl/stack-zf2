@@ -1,6 +1,8 @@
 <?php
 namespace Stack;
 
+use Stack\Zend\Request as ZendRequest;
+
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
@@ -10,7 +12,6 @@ use Zend\Mvc\Service;
 use Zend\ServiceManager\ServiceManager;
 use Zend\Mvc\MvcEvent;
 use Zend\Http\Response as ZendResponse;
-use Zend\Http\PhpEnvironment\Request as ZendRequest;
 
 class ZendHttpKernel implements HttpKernelInterface
 {
@@ -209,13 +210,12 @@ class ZendHttpKernel implements HttpKernelInterface
     /**
      * Converts a symfony request to a zend request.
      *
-     * @todo Don't use from-to string.
      * @param \Symfony\Component\HttpFoundation\Request $request
      * @return \Zend\Http\PhpEnvironment\Request
      */
     protected static function createZendRequest(SymfonyRequest $request)
     {
-        return ZendRequest::fromString((string)$request);
+        return ZendRequest::fromSymfony($request);
     }
 
 
