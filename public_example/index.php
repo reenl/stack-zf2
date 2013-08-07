@@ -15,11 +15,14 @@ if (php_sapi_name() === 'cli-server' && is_file(__DIR__ . parse_url($_SERVER['RE
 // Setup autoloading
 require __DIR__.'/../vendor/autoload.php';
 
+// Initialize Zend MVC
+$zend = \Zend\Mvc\Application::init(require 'config/application.config.php');
+
 // Define your stack
-$kernel = \Stack\ZendHttpKernel::init(require 'config/application.config.php');
+$kernel = new \Stack\ZendHttpKernel($zend);
 
 // Run the application
-$request = Symfony\Component\HttpFoundation\Request::createFromGlobals();
+$request = \Symfony\Component\HttpFoundation\Request::createFromGlobals();
 $response = $kernel->handle($request);
 
 // Send the response.

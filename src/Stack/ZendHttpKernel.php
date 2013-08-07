@@ -6,14 +6,15 @@ use Stack\Zend\Request as ZendRequest;
 use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 use Symfony\Component\HttpKernel\HttpKernelInterface;
+use Symfony\Component\HttpKernel\Exception\ServiceUnavailableHttpException;
 
 use Zend\Mvc\Application;
-use Zend\Mvc\Service;
-use Zend\ServiceManager\ServiceManager;
 use Zend\Mvc\MvcEvent;
+use Zend\EventManager\EventManagerInterface;
+use Zend\EventManager\ListenerAggregateInterface;
 use Zend\Http\Response as ZendResponse;
 
-class ZendHttpKernel implements HttpKernelInterface
+class ZendHttpKernel implements HttpKernelInterface, ListenerAggregateInterface
 {
     /**
      *
@@ -23,75 +24,64 @@ class ZendHttpKernel implements HttpKernelInterface
 
     /**
      *
-     * @var array
+     * @var \Zend\Stdlib\CallbackHandler[]
      */
     protected $listeners = array();
-
-    /**
-     * Fully compatable with \Zend\Mvc\Application::init. However this function
-     * does not call bootstrap.
-     *
-     * @param array $configuration
-     * @return \Stack\ZendHttpKernel
-     */
-    public static function init($configuration = array())
-    {
-        $smConfig = isset($configuration['service_manager']) ? $configuration['service_manager'] : array();
-
-        $serviceManager = new ServiceManager();
-        $cfg = new Service\ServiceManagerConfig($smConfig);
-        $cfg->configureServiceManager($serviceManager);
-        $serviceManager->setService('ApplicationConfig', $configuration);
-        $serviceManager->get('ModuleManager')->loadModules();
-        $application = $serviceManager->get('Application');
-
-        $instance = new static($application);
-        if (isset($configuration['listeners'])) {
-            $instance->setListeners($configuration['listeners']);
-        }
-        return $instance;
-    }
 
     /**
      * The Zend\Mvc\Application can be injected here if you wish not to use
      * the ::init function.
      *
-     * This class will boostrap the application. If you call bootstrap yourself
-     * events will be triggered, without any use.
+     * Make sure your application is bootstrapped.
      *
      * @param \Zend\Mvc\Application $application
      * @return \Stack\ZendHttpKernel
      */
-    public function __construct(Application $application)
+    public function __construct(Application $application = null)
     {
         // Add the application.
-        $this->application = $application;
-        return $this;
+        if ($application !== null) {
+            $this->setApplication($application);
+        }
     }
 
     /**
-     * These listeners are injected in the bootstrap method.
+     * Set the Zend\Mvc\Application and attach the event listeners.
      *
-     * @param array $listeners
-     * @return \Stack\ZendHttpKernel
+     * @param \Zend\Mvc\Application $application
+     * @return ZendHttpKernel
      */
-    public function setListeners(array $listeners)
+    public function setApplication(Application $application)
     {
-        $this->listeners = $listeners;
+        if ($this->application === $application) {
+            // Application unchanged.
+            return $this;
+        }
+
+        // Unregister from previous application.
+        if ($this->application !== null) {
+            // Detach from old application.
+            $this->detach($this->application->getEventManager());
+        }
+
+        // Set the application.
+        $this->application = $application;
+        $this->attach($application->getEventManager());
+
         return $this;
     }
 
     /**
      * {@inheritdoc}
+     *
+     * @param \Symfony\Component\HttpFoundation\Request $request
+     * @param int $type
+     * @param boolean $catch
+     * @return \Symfony\Component\HttpFoundation\Response
      */
     public function handle(SymfonyRequest $request, $type = HttpKernelInterface::MASTER_REQUEST, $catch = true)
     {
         $this->setSymfonyRequest($request);
-        /*
-         * ZF 2.2 exposes the request object when bootstrapping. With that fixed
-         * we can move this back to init.
-         */
-        $this->bootstrap();
 
         // Register if exceptions should be caught into the ServiceManager.
         $this->setCatchExceptions($catch);
@@ -103,25 +93,34 @@ class ZendHttpKernel implements HttpKernelInterface
     }
 
     /**
+     * Prevent Zend\Mvc\Application from sending the response.
      *
-     * @return \Stack\ZendHttpKernel
+     * @param \Zend\Mvc\MvcEvent $event
+     * @return null
      */
-    public function bootstrap()
+    public function onFinish(MvcEvent $event)
     {
-        $this->application->bootstrap($this->listeners);
-
-        // Replace SendResponseListener
-        $events = $this->application->getEventManager();
-        $events->clearListeners(MvcEvent::EVENT_FINISH);
-
-        $events->attach(MvcEvent::EVENT_DISPATCH_ERROR, array($this, 'throwException'));
-        $events->attach(MvcEvent::EVENT_RENDER_ERROR, array($this, 'throwException'));
-
-        return $this;
+        if ($event->getApplication() !== $this->application) {
+            // Do nothing if this application is not managed.
+            return;
+        }
+        $event->stopPropagation(true);
     }
 
+    /**
+     * Throws exceptions on error events.
+     *
+     * @param \Zend\Mvc\MvcEvent $event
+     * @return null
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException
+     */
     public function throwException(MvcEvent $event)
     {
+        if ($event->getApplication() !== $this->application) {
+            // Do nothing if this application is not managed.
+            return;
+        }
+
         $sm = $this->application->getServiceManager();
         if ($sm->get('KernelCatchExceptions')) {
             return;
@@ -131,7 +130,7 @@ class ZendHttpKernel implements HttpKernelInterface
 
         $ex = $event->getParam('exception');
         if ($ex !== null) {
-            throw $ex;
+            throw new ServiceUnavailableHttpException(null, null, $ex);
         }
 
         $error = $event->getError();
@@ -155,9 +154,6 @@ class ZendHttpKernel implements HttpKernelInterface
     /**
      * Run the application.
      *
-     * Our run function returns null until ZF decides what to return at
-     * \Zend\Mvc\Application::run
-     *
      * @return null
      */
     public function run()
@@ -179,6 +175,8 @@ class ZendHttpKernel implements HttpKernelInterface
         $serviceManager->setAllowOverride(true);
         $serviceManager->setService('Request', $zendRequest);
         $serviceManager->setAllowOverride(false);
+
+        $this->application->getMvcEvent()->setRequest($zendRequest);
     }
 
     /**
@@ -218,7 +216,6 @@ class ZendHttpKernel implements HttpKernelInterface
         return ZendRequest::fromSymfony($request);
     }
 
-
     /**
      * Converts a zend response to a symfony response.
      *
@@ -236,5 +233,33 @@ class ZendHttpKernel implements HttpKernelInterface
             $headers[$name] = $header->getFieldValue();
         }
         return new SymfonyResponse($content, $status, $headers);
+    }
+
+    /**
+     * Attach the listeners.
+     *
+     * @param \Zend\EventManager\EventManagerInterface $events
+     * @return null
+     */
+    public function attach(EventManagerInterface $events)
+    {
+        $this->listeners[] = $events->attach(MvcEvent::EVENT_FINISH, array($this, 'onFinish'));
+        $this->listeners[] = $events->attach(MvcEvent::EVENT_DISPATCH_ERROR, array($this, 'throwException'));
+        $this->listeners[] = $events->attach(MvcEvent::EVENT_RENDER_ERROR, array($this, 'throwException'));
+    }
+
+    /**
+     * Detach the listeners.
+     *
+     * @param \Zend\EventManager\EventManagerInterface $events
+     * @return null
+     */
+    public function detach(EventManagerInterface $events)
+    {
+        foreach ($this->listeners as $index => $listener) {
+            if ($events->detach($listener)) {
+                unset($this->listeners[$index]);
+            }
+        }
     }
 }
