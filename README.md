@@ -32,15 +32,20 @@ A number of things including:
 
 ## Todo
 
-- Find out what to do with Request::getBasePath. Hardcoded usage in some helper.
-  (this is why we need a Zend\Http\PhpEnvironment\Request for now)
 - Find out how to handle chdir, probably a setter on our kernel.
   (Please twitter me if you know the dependencies for chdir.)
 - Test cases.
 - Test compatibility other stack components.
+- ~~Find out what to do with Request::getBasePath. Hardcoded usage in some helper.~~
 - ~~Conversion from Symfony to Zend Request is via toString.~~
-  $_ENV and $_FILES are not yet supported.
 - ~~Try to make ZF throw exceptions instead of an error page when $catch is false.~~
+
+## Known issues
+
+- Application must be bootstrapped before calling `::handle`.
+- The request object can not be used during bootstrap, because the request that 
+  is going to be handled is not known when bootstrapping.
+- `$_ENV` and `$_FILES` are not (yet) supported.
 
 ## Support
 
