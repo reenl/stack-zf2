@@ -28,9 +28,20 @@ class Request extends HttpRequest
         $instance->setQuery(new Parameters($request->query->all()));
         $instance->setPost(new Parameters($request->request->all()));
         $instance->setCookies(new Parameters($request->cookies->all()));
-        $instance->setServer(new Parameters($request->server->all()));
+
+        $server = $request->server->all();
+
+        // Empty strings in a default Symfony request, ZF doesn't like that.
+        $unsetOnEmpty = array('SCRIPT_NAME', 'SCRIPT_FILENAME', 'PHP_SELF');
+        foreach ($unsetOnEmpty as $unsetMe) {
+            if (isset($server[$unsetMe]) && $server[$unsetMe] == '') {
+                unset($server[$unsetMe]);
+            }
+        }
+        $instance->setServer(new Parameters($server));
 
         $instance->setContent($request->getContent());
+
         return $instance;
     }
 }
