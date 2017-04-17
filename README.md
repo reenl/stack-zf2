@@ -1,8 +1,21 @@
+# Note
+
+This repository was created way back when PSR-7 wasn't a thing. I would advise
+you to use PSR-7 as intermediate request format. Most stack middleware is already
+available for PSR-7.
+
+The most common PSR-7 implementation can be found 
+[here](https://packagist.org/packages/zendframework/zend-diactoros). After that
+have you should search for bridges to make it compatible with your framework if
+it isn't already.
+
+== Original Content Below ==
+
 # Stack/ZF2
 
-This project runs a [ZF2] (https://github.com/zendframework/zf2) project within
-the [Symfony Http Foundation] (https://github.com/symfony/HttpFoundation) wich is
-even more fun when [Stack] (http://stackphp.com/) comes into the picture.
+This project runs a [ZF2](https://github.com/zendframework/zf2) project within
+the [Symfony Http Foundation](https://github.com/symfony/HttpFoundation) wich is
+even more fun when [Stack](http://stackphp.com/) comes into the picture.
 
 ## Installation
 
@@ -43,7 +56,7 @@ However it can be useful in several other cases:
 ## Support
 
 - Open a ticket
-- twitter: https://twitter.com/reenlokum
+- twitter: https://twitter.com/justreenl
 
 ## Contribute
 
