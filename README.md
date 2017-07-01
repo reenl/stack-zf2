@@ -1,4 +1,4 @@
-# Note
+# == THIS REPOSITORY IS OUTDATED ==
 
 This repository was created way back when PSR-7 wasn't a thing. I would advise
 you to use PSR-7 as intermediate request format. Most stack middleware is already
@@ -6,10 +6,10 @@ available for PSR-7.
 
 The most common PSR-7 implementation can be found 
 [here](https://packagist.org/packages/zendframework/zend-diactoros). After that
-have you should search for bridges to make it compatible with your framework if
-it isn't already.
+you should search for bridges to make it compatible with your framework if it 
+isn't already.
 
-== Original Content Below ==
+# == Original Content Below ==
 
 # Stack/ZF2
 
